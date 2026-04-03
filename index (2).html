@@ -1,0 +1,420 @@
+<html lang="zh-CN"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>苏轼文学常识匹配</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#3b82f6',
+                        accent: '#fbbf24',
+                        success: '#10b981',
+                        background: '#f0f9ff',
+                    },
+                    fontFamily: {
+                        sans: ['Arial', 'sans-serif'],
+                        serif: ['SimSun', 'serif'],
+                    },
+                    boxShadow: {
+                        'custom': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .draggable {
+                cursor: grab;
+                user-select: none;
+                transition: all 0.3s ease;
+            }
+            .draggable:active {
+                cursor: grabbing;
+                transform: scale(1.05);
+            }
+            .drop-target {
+                transition: all 0.3s ease;
+            }
+            .drop-target.highlight {
+                background-color: rgba(59, 130, 246, 0.1);
+                transform: translateY(-2px);
+            }
+            .drop-target.correct {
+                background-color: rgba(16, 185, 129, 0.2);
+                border-color: #10b981;
+            }
+            .drop-target.incorrect {
+                background-color: rgba(239, 68, 68, 0.2);
+                border-color: #ef4444;
+            }
+            .line {
+                position: absolute;
+                height: 2px;
+                background-color: #3b82f6;
+                transform-origin: 0 0;
+                z-index: 10;
+                transition: all 0.3s ease;
+            }
+            .success-animation {
+                animation: success-pulse 0.6s ease-in-out;
+            }
+            @keyframes success-pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+            .celebration {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 50;
+            }
+            .confetti {
+                position: absolute;
+                width: 10px;
+                height: 10px;
+                background-color: var(--color);
+                opacity: 0.8;
+                animation: confetti-fall 3s ease-in-out forwards;
+            }
+            @keyframes confetti-fall {
+                0% {
+                    transform: translateY(-100px) rotate(0deg);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(100vh) rotate(360deg);
+                    opacity: 0;
+                }
+            }
+        }
+    </style>
+</head>
+<body class="bg-background min-h-screen font-serif">
+    <!-- 背景图 -->
+    <div class="fixed inset-0 z-0 opacity-10">
+        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/e133ad85ebaa46798d7c45e6cb38084d~tplv-a9rns2rl98-image.image?lk3s=8e244e95&amp;rcl=20260402153834598E379E9A4C877E76CA&amp;rrcfp=f06b921b&amp;x-expires=1777707540&amp;x-signature=AHvOcq%2BPjLyHzwWwEuMBnGFws7U%3D" alt="背景" class="w-full h-full object-cover">
+    </div>
+
+    <!-- 庆祝动画容器 -->
+    <div id="celebration" class="celebration hidden"></div>
+
+    <!-- 主容器 -->
+    <div class="relative z-10 container mx-auto px-4 py-12 max-w-5xl">
+        <!-- 标题 -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-primary mb-4">苏轼文学常识匹配</h1>
+            <p class="text-lg text-gray-600">将左侧的问题与右侧的答案匹配起来，了解更多关于苏轼的知识！</p>
+        </div>
+
+        <!-- 匹配区域 -->
+        <div class="flex flex-col md:flex-row gap-8 items-start">
+            <!-- 左侧问题区 -->
+            <div class="w-full md:w-1/2 bg-white rounded-xl shadow-custom p-6">
+                <h2 class="text-2xl font-bold text-primary mb-6 text-center">待匹配项</h2>
+                <div id="questions" class="space-y-4">
+                    <div class="draggable bg-blue-50 border-2 border-blue-200 rounded-lg p-4 shadow-sm hover:shadow-md" data-id="q1" data-answer="a4">
+                        <p class="text-lg">苏轼的豪放派代表作品</p>
+                    </div>
+                    <div class="draggable bg-blue-50 border-2 border-blue-200 rounded-lg p-4 shadow-sm hover:shadow-md" data-id="q2" data-answer="a2">
+                        <p class="text-lg">《江城子·密州出猎》的词牌名</p>
+                    </div>
+                    <div class="draggable bg-blue-50 border-2 border-blue-200 rounded-lg p-4 shadow-sm hover:shadow-md" data-id="q3" data-answer="a3">
+                        <p class="text-lg">"唐宋八大家"中的宋代文人</p>
+                    </div>
+                    <div class="draggable bg-blue-50 border-2 border-blue-200 rounded-lg p-4 shadow-sm hover:shadow-md" data-id="q4" data-answer="a1">
+                        <p class="text-lg">苏轼的号</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧答案区 -->
+            <div class="w-full md:w-1/2 bg-white rounded-xl shadow-custom p-6">
+                <h2 class="text-2xl font-bold text-primary mb-6 text-center">选项</h2>
+                <div id="answers" class="space-y-4">
+                    <div class="drop-target border-2 border-gray-200 rounded-lg p-4" data-id="a1">
+                        <p class="text-lg">东坡居士</p>
+                        <div class="feedback hidden"></div>
+                    </div>
+                    <div class="drop-target border-2 border-gray-200 rounded-lg p-4" data-id="a2">
+                        <p class="text-lg">江城子</p>
+                        <div class="feedback hidden"></div>
+                    </div>
+                    <div class="drop-target border-2 border-gray-200 rounded-lg p-4" data-id="a3">
+                        <p class="text-lg">苏轼</p>
+                        <div class="feedback hidden"></div>
+                    </div>
+                    <div class="drop-target border-2 border-gray-200 rounded-lg p-4" data-id="a4">
+                        <p class="text-lg">《江城子密州出猎》</p>
+                        <div class="feedback hidden"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 连接线容器 -->
+        <div id="lines-container" class="fixed inset-0 pointer-events-none z-20"></div>
+
+        <!-- 重置按钮 -->
+        <div class="text-center mt-8">
+            <button id="reset-btn" class="bg-primary hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300">
+                <i class="fa fa-refresh mr-2"></i>重新开始
+            </button>
+        </div>
+    </div>
+
+    <!-- 音效元素 -->
+    <audio id="drag-sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="correct-sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="wrong-sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/3125/3125-preview.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="celebration-sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const draggables = document.querySelectorAll('.draggable');
+            const dropTargets = document.querySelectorAll('.drop-target');
+            const linesContainer = document.getElementById('lines-container');
+            const resetBtn = document.getElementById('reset-btn');
+            const celebration = document.getElementById('celebration');
+            
+            // 获取音效元素
+            const dragSound = document.getElementById('drag-sound');
+            const correctSound = document.getElementById('correct-sound');
+            const wrongSound = document.getElementById('wrong-sound');
+            const celebrationSound = document.getElementById('celebration-sound');
+            
+            // 状态管理
+            let draggedElement = null;
+            let currentLine = null;
+            let correctMatches = 0;
+            let userMatches = {}; // 存储用户的匹配
+            
+            // 初始化拖拽事件
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', dragStart);
+                draggable.addEventListener('dragend', dragEnd);
+                
+                // 使元素可拖拽
+                draggable.setAttribute('draggable', 'true');
+            });
+            
+            // 初始化放置区域事件
+            dropTargets.forEach(target => {
+                target.addEventListener('dragover', dragOver);
+                target.addEventListener('dragenter', dragEnter);
+                target.addEventListener('dragleave', dragLeave);
+                target.addEventListener('drop', drop);
+            });
+            
+            // 拖拽开始
+            function dragStart(e) {
+                draggedElement = this;
+                this.classList.add('opacity-50');
+                
+                // 播放拖拽音效
+                dragSound.currentTime = 0;
+                dragSound.play().catch(e => console.log('Audio play failed:', e));
+                
+                // 创建连接线
+                currentLine = document.createElement('div');
+                currentLine.classList.add('line');
+                linesContainer.appendChild(currentLine);
+                
+                // 更新连接线位置
+                updateLinePosition(e);
+                
+                // 添加鼠标移动事件来更新连接线
+                document.addEventListener('mousemove', updateLinePosition);
+            }
+            
+            // 拖拽结束
+            function dragEnd() {
+                this.classList.remove('opacity-50');
+                draggedElement = null;
+                
+                // 移除连接线和鼠标移动事件
+                if (currentLine) {
+                    currentLine.remove();
+                    currentLine = null;
+                }
+                document.removeEventListener('mousemove', updateLinePosition);
+            }
+            
+            // 拖拽经过放置区域
+            function dragOver(e) {
+                e.preventDefault();
+            }
+            
+            // 拖拽进入放置区域
+            function dragEnter(e) {
+                e.preventDefault();
+                this.classList.add('highlight');
+            }
+            
+            // 拖拽离开放置区域
+            function dragLeave() {
+                this.classList.remove('highlight');
+            }
+            
+            // 放置
+            function drop(e) {
+                e.preventDefault();
+                this.classList.remove('highlight');
+                
+                const questionId = draggedElement.dataset.id;
+                const answerId = this.dataset.id;
+                const correctAnswerId = draggedElement.dataset.answer;
+                
+                // 移除之前的匹配
+                if (userMatches[questionId]) {
+                    const previousAnswer = document.querySelector(`[data-id="${userMatches[questionId]}"]`);
+                    if (previousAnswer) {
+                        previousAnswer.classList.remove('correct', 'incorrect');
+                        const previousFeedback = previousAnswer.querySelector('.feedback');
+                        if (previousFeedback) {
+                            previousFeedback.classList.add('hidden');
+                        }
+                    }
+                }
+                
+                // 记录新的匹配
+                userMatches[questionId] = answerId;
+                
+                // 检查是否正确
+                const isCorrect = answerId === correctAnswerId;
+                
+                // 更新UI
+                this.classList.remove('correct', 'incorrect');
+                this.classList.add(isCorrect ? 'correct' : 'incorrect');
+                
+                // 显示反馈
+                const feedback = this.querySelector('.feedback');
+                feedback.innerHTML = isCorrect ? 
+                    '<span class="text-success text-xl font-bold">✓</span>' : 
+                    '<span class="text-red-500 text-xl font-bold">✗</span>';
+                feedback.classList.remove('hidden');
+                
+                // 播放正确或错误音效
+                if (isCorrect) {
+                    correctSound.currentTime = 0;
+                    correctSound.play().catch(e => console.log('Audio play failed:', e));
+                } else {
+                    wrongSound.currentTime = 0;
+                    wrongSound.play().catch(e => console.log('Audio play failed:', e));
+                }
+                
+                // 添加成功动画
+                if (isCorrect) {
+                    this.classList.add('success-animation');
+                    setTimeout(() => {
+                        this.classList.remove('success-animation');
+                    }, 600);
+                    
+                    // 增加正确匹配计数
+                    correctMatches = Object.values(userMatches).filter((value, index, self) => 
+                        value === document.querySelector(`[data-id="q${index + 1}"]`).dataset.answer
+                    ).length;
+                    
+                    // 检查是否达到4个正确匹配
+                    if (correctMatches >= 4) {
+                        setTimeout(showCelebration, 500);
+                    }
+                }
+            }
+            
+            // 更新连接线位置
+            function updateLinePosition(e) {
+                if (!draggedElement || !currentLine) return;
+                
+                const dragRect = draggedElement.getBoundingClientRect();
+                const lineStartX = dragRect.left + dragRect.width / 2;
+                const lineStartY = dragRect.top + dragRect.height / 2;
+                
+                const lineEndX = e.clientX;
+                const lineEndY = e.clientY;
+                
+                const length = Math.sqrt(Math.pow(lineEndX - lineStartX, 2) + Math.pow(lineEndY - lineStartY, 2));
+                const angle = Math.atan2(lineEndY - lineStartY, lineEndX - lineStartX) * 180 / Math.PI;
+                
+                currentLine.style.width = `${length}px`;
+                currentLine.style.left = `${lineStartX}px`;
+                currentLine.style.top = `${lineStartY}px`;
+                currentLine.style.transform = `rotate(${angle}deg)`;
+            }
+            
+            // 显示庆祝动画
+            function showCelebration() {
+                celebration.classList.remove('hidden');
+                
+                // 播放庆祝音效
+                celebrationSound.currentTime = 0;
+                celebrationSound.play().catch(e => console.log('Audio play failed:', e));
+                
+                // 创建彩色纸屑
+                const colors = ['#f97316', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.classList.add('confetti');
+                    confetti.style.left = `${Math.random() * 100}%`;
+                    confetti.style.animationDelay = `${Math.random() * 3}s`;
+                    confetti.style.setProperty('--color', colors[Math.floor(Math.random() * colors.length)]);
+                    celebration.appendChild(confetti);
+                }
+                
+                // 显示鼓励消息
+                const message = document.createElement('div');
+                message.className = 'absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white bg-opacity-90 p-8 rounded-xl shadow-xl text-center';
+                message.innerHTML = `
+                    <h2 class="text-3xl font-bold text-primary mb-4">好样的！</h2>
+                    <p class="text-xl text-gray-700">你对苏轼已经有所了解了！</p>
+                `;
+                celebration.appendChild(message);
+                
+                // 3秒后隐藏庆祝动画
+                setTimeout(() => {
+                    celebration.classList.add('hidden');
+                    celebration.innerHTML = '';
+                }, 5000);
+            }
+            
+            // 重置游戏
+            resetBtn.addEventListener('click', function() {
+                // 重置状态
+                userMatches = {};
+                correctMatches = 0;
+                
+                // 重置UI
+                dropTargets.forEach(target => {
+                    target.classList.remove('correct', 'incorrect', 'highlight');
+                    const feedback = target.querySelector('.feedback');
+                    if (feedback) {
+                        feedback.classList.add('hidden');
+                    }
+                });
+                
+                // 隐藏庆祝动画
+                celebration.classList.add('hidden');
+                celebration.innerHTML = '';
+            });
+        });
+    </script>
+
+</body></html>
